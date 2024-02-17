@@ -12,6 +12,7 @@ dist
 *.local
 env-config.js
 config
+images
 
 # Editor directories and files
 .vscode/*

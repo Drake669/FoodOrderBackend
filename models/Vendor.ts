@@ -1,4 +1,5 @@
 import mongoose, { Document, Model, Schema} from "mongoose"
+import { FoodDocument } from "./Food";
 
 
 export interface VendorDocument extends Document {
@@ -11,7 +12,7 @@ export interface VendorDocument extends Document {
     email: string;
     password: string;
     salt: string;
-    foods: any;
+    foods: FoodDocument[];
     rating: number
     serviceAvailable: boolean
     coverImages: string[]
