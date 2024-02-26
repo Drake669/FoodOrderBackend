@@ -11,6 +11,14 @@ export class CustomerSignUpInputs {
   phone_number: string;
 }
 
+export class CustomerLoginInputs {
+  @IsEmail()
+  email: string;
+
+  @Length(6, 12)
+  password: string;
+}
+
 export interface CustomerPayload {
   _id: string;
   email: string;

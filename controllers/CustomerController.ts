@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { plainToClass } from "class-transformer";
 import { validate } from "class-validator";
-import { CustomerSignUpInputs } from "../dto/Customer.dto";
+import { CustomerSignUpInputs, CustomerLoginInputs } from "../dto/Customer.dto";
 import { Customer } from "../models";
 import {
   GenerateOTP,
@@ -9,6 +9,7 @@ import {
   generateHashedPassword,
   generateSalt,
   generateSignature,
+  validatePassword,
 } from "../utility";
 
 export const CustomerSignUp = async (
@@ -18,7 +19,9 @@ export const CustomerSignUp = async (
 ) => {
   try {
     const signupInputs = plainToClass(CustomerSignUpInputs, req.body);
-    const inputErrors = await validate(signupInputs);
+    const inputErrors = await validate(signupInputs, {
+      validationError: { target: false },
+    });
 
     if (inputErrors.length > 0) {
       return res.status(400).json(inputErrors);
@@ -72,7 +75,40 @@ export const CustomerLogin = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
+) => {
+  try {
+    const loginInputs = plainToClass(CustomerLoginInputs, req.body);
+    const inputErrors = await validate(loginInputs, {
+      validationError: { target: false },
+    });
+
+    if (inputErrors.length > 0) {
+      return res.status(400).json(inputErrors);
+    }
+    const { email, password } = loginInputs;
+    const customer = await Customer.findOne({ email });
+    if (customer !== null) {
+      const isValid = await validatePassword(
+        password,
+        customer.password,
+        customer.salt
+      );
+      if (isValid) {
+        const signature = generateSignature({
+          _id: customer._id,
+          email: customer.email,
+          verified: customer.verified,
+        });
+        return res.status(200).json({ signature, verified: customer.verified });
+      }
+      return res.status(400).json({ message: "Invalid user password" });
+    }
+    return res.status(400).json({ message: "Email not found" });
+  } catch (error) {
+    console.log("CUSTOMER_LOGIN_ERROR");
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export const RequestOTP = async (
   req: Request,
@@ -89,7 +125,6 @@ export const VerifyCustomer = async (
   const customer = req.user;
   if (customer) {
     const profile = await Customer.findById(customer._id);
-    console.log(profile);
     if (profile) {
       if (profile.otp === otp && profile.otp_expiry >= new Date()) {
         profile.verified = true;
