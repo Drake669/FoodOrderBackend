@@ -60,7 +60,7 @@ export const CustomerSignUp = async (
         email: customer.email,
         verified: customer.verified,
       });
-      return res.status(201).json(signature);
+      return res.status(201).json({ signature, verified: customer.verified });
     }
   } catch (error) {
     console.log("CUSTOMER_SIGNUP_ERROR", error);
@@ -74,17 +74,40 @@ export const CustomerLogin = async (
   next: NextFunction
 ) => {};
 
-export const VerifyCustomer = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {};
-
 export const RequestOTP = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {};
+
+export const VerifyCustomer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { otp } = req.body;
+  const customer = req.user;
+  if (customer) {
+    const profile = await Customer.findById(customer._id);
+    console.log(profile);
+    if (profile) {
+      if (profile.otp === otp && profile.otp_expiry >= new Date()) {
+        profile.verified = true;
+        const updatedProfile = await profile.save();
+        const signature = generateSignature({
+          _id: updatedProfile._id,
+          email: updatedProfile.email,
+          verified: updatedProfile.verified,
+        });
+        return res
+          .status(200)
+          .json({ signature, verified: updatedProfile.verified });
+      }
+      return res.status(400).json({ message: "Error with OTP verification" });
+    }
+    return res.status(401).json({ message: "Unauthenticated user" });
+  }
+};
 
 export const GetCustomerProfile = async (
   req: Request,
