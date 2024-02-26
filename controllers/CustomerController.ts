@@ -1,7 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { plainToClass } from "class-transformer";
 import { validate } from "class-validator";
-import { CustomerSignUpInputs, CustomerLoginInputs } from "../dto/Customer.dto";
+import {
+  CustomerSignUpInputs,
+  CustomerLoginInputs,
+  UpdateCustomerInputs,
+} from "../dto/Customer.dto";
 import { Customer } from "../models";
 import {
   GenerateOTP,
@@ -169,10 +173,52 @@ export const GetCustomerProfile = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
+) => {
+  try {
+    const customer = req.user;
+    if (customer) {
+      const profile = await Customer.findById(customer._id);
+      if (profile !== null) {
+        return res.status(200).json(profile);
+      }
+      return res.status(400).json({ message: "User not found" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("GET_CUSTOMER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export const UpdateCustomerProfile = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
+) => {
+  try {
+    const updateInputs = plainToClass(UpdateCustomerInputs, req.body);
+    const inputErrors = await validate(updateInputs, {
+      validationError: { target: false },
+    });
+    if (inputErrors.length > 0) {
+      return res.status(400).json(inputErrors);
+    }
+    const { first_name, last_name, address } = updateInputs;
+    const customer = req.user;
+    if (customer) {
+      const profile = await Customer.findById(customer._id);
+      if (profile !== null) {
+        profile.first_name = first_name;
+        profile.last_name = last_name;
+        profile.address = address;
+        const updatedProfile = await profile.save();
+        return res.status(200).json(updatedProfile);
+      }
+      return res.status(400).json({ message: "User not found" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("UPDATE_CUSTOMER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
