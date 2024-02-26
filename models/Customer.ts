@@ -5,7 +5,7 @@ export interface CustomerDocument extends Document {
   password: string;
   phone_number: string;
   salt: string;
-  otp: string;
+  otp: number;
   otp_expiry: Date;
   first_name: string;
   last_name: string;
@@ -27,7 +27,7 @@ const CustomerSchema = new Schema(
     verified: { type: Boolean },
     first_name: { type: String },
     last_name: { type: String },
-    otp: { type: String },
+    otp: { type: Number },
     otp_expiry: { type: Date },
   },
   {

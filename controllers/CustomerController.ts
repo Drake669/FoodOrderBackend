@@ -114,7 +114,28 @@ export const RequestOTP = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
+) => {
+  try {
+    const customer = req.user;
+    if (customer) {
+      const profile = await Customer.findById(customer._id);
+      if (profile !== null) {
+        const { otp, expiry } = GenerateOTP();
+        profile.otp = otp;
+        profile.otp_expiry = expiry;
+        const updatedProfile = await profile.save();
+        await SendOTP(updatedProfile.otp, updatedProfile.phone_number);
+
+        return res.status(200).json({ message: "OTP sent successfully" });
+      }
+      return res.status(400).json({ message: "User not found" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("REQUEST_OTP_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export const VerifyCustomer = async (
   req: Request,
@@ -126,7 +147,7 @@ export const VerifyCustomer = async (
   if (customer) {
     const profile = await Customer.findById(customer._id);
     if (profile) {
-      if (profile.otp === otp && profile.otp_expiry >= new Date()) {
+      if (profile.otp === parseInt(otp) && profile.otp_expiry >= new Date()) {
         profile.verified = true;
         const updatedProfile = await profile.save();
         const signature = generateSignature({
