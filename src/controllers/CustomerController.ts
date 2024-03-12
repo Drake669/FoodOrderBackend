@@ -307,7 +307,7 @@ export const GetOrderById = async (
     const customer = req.user;
     const id = req.params.id;
     if (customer) {
-      const order = await Order.findById(id);
+      const order = await Order.findById(id).populate("items.food");
       return res.status(200).json(order);
     }
     return res.status(401).json({ message: "Unauthorized user" });
