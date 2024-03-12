@@ -6,7 +6,7 @@ import {
   CustomerLoginInputs,
   UpdateCustomerInputs,
 } from "../dto/Customer.dto";
-import { Customer } from "../models";
+import { Customer, Food, Order } from "../models";
 import {
   GenerateOTP,
   SendOTP,
@@ -15,6 +15,7 @@ import {
   generateSignature,
   validatePassword,
 } from "../utility";
+import { CreateOrderInput } from "../dto";
 
 export const CustomerSignUp = async (
   req: Request,
@@ -219,6 +220,99 @@ export const UpdateCustomerProfile = async (
     return res.status(401).json({ message: "Unauthorized user" });
   } catch (error) {
     console.log("UPDATE_CUSTOMER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const CreateOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const customer = req.user;
+    if (customer) {
+      const profile = await Customer.findById(customer._id);
+      if (profile !== null) {
+        const items = <[CreateOrderInput]>req.body;
+        const foods = await Food.find()
+          .where("_id")
+          .in(items.map((item) => item._id))
+          .exec();
+        let cart = Array();
+        let totalAmount = 0;
+        console.log(foods);
+        items.map((item) => {
+          foods.map((food) => {
+            console.log(item._id, food._id);
+            if (item._id == food._id) {
+              totalAmount += food.price * item.unit;
+              cart.push({ food, unit: item.unit });
+              return;
+            }
+          });
+        });
+        if (cart.length > 0) {
+          const currentOrder = await Order.create({
+            items: cart,
+            totalAmount,
+            paidThrough: "card",
+            orderStatus: "pending",
+          });
+          console.log(profile);
+          profile.orders.push(currentOrder);
+          await profile.save();
+          return res.status(200).json(currentOrder);
+        }
+        return res
+          .status(400)
+          .json({ message: "Unable to process cart items" });
+      }
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("CREATE_ORDER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const GetAllOrders = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const customer = req.user;
+    if (customer) {
+      const profile = await Customer.findById(customer._id).populate("orders");
+      if (profile !== null) {
+        const orders = profile.orders;
+        return res.status(200).json(orders);
+      }
+      return res.status(400).json({ message: "Failed to get user orders" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("GET_ORDERS_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const GetOrderById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const customer = req.user;
+    const id = req.params.id;
+    if (customer) {
+      const order = await Order.findById(id);
+      return res.status(200).json(order);
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("GET_ORDER_ERROR", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

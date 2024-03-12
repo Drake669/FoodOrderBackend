@@ -65,7 +65,7 @@ export const CreateVendor = async (
     return res.json(createdVendor);
   } catch (error) {
     console.log("VENDOR_CREATION_ERROR", error);
-    return error;
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 

@@ -25,6 +25,6 @@ export const Authenticate = async (
     return res.status(401).json({ message: "Unauthorized user" });
   } catch (error) {
     console.log("TOKEN_VALIDATION_ERROR", error);
-    return error;
+    return res.status(500).json({ message: "Token error" });
   }
 };
