@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  AddToCart,
   CreateOrder,
   CustomerLogin,
   CustomerSignUp,
@@ -30,6 +31,7 @@ router.get("/orders", GetAllOrders);
 router.get("/orders/:id", GetOrderById);
 
 /************************************* Cart*************************************/
+router.post("/cart", AddToCart);
 
 /************************************* Payments*************************************/
 

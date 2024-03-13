@@ -14,6 +14,7 @@ export interface CustomerDocument extends Document {
   verified: boolean;
   lgn: string;
   lat: string;
+  cart: any[];
   orders: OrderDocument[];
 }
 
@@ -35,6 +36,12 @@ const CustomerSchema = new Schema(
       {
         type: mongoose.SchemaTypes.ObjectId,
         ref: "Order",
+      },
+    ],
+    cart: [
+      {
+        food: { type: mongoose.SchemaTypes.ObjectId, ref: "Food" },
+        unit: { type: Number },
       },
     ],
   },

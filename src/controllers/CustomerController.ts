@@ -244,7 +244,6 @@ export const CreateOrder = async (
         console.log(foods);
         items.map((item) => {
           foods.map((food) => {
-            console.log(item._id, food._id);
             if (item._id == food._id) {
               totalAmount += food.price * item.unit;
               cart.push({ food, unit: item.unit });
@@ -313,6 +312,46 @@ export const GetOrderById = async (
     return res.status(401).json({ message: "Unauthorized user" });
   } catch (error) {
     console.log("GET_ORDER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const AddToCart = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const customer = req.user;
+    const cartItem = <CreateOrderInput>req.body;
+    if (customer) {
+      const profile = await Customer.findById(customer._id).populate(
+        "cart.food"
+      );
+      if (profile !== null) {
+        const cartItems = profile.cart;
+        const food = await Food.findById(cartItem._id);
+        if (food) {
+          const existingItem = cartItems.filter(
+            (item) => item.food._id.toString() === cartItem._id
+          );
+          if (existingItem.length > 0) {
+            const index = cartItems.indexOf(existingItem[0]);
+            cartItems[index] = { food, unit: cartItem.unit };
+          } else {
+            cartItems.push({ food, unit: cartItem.unit });
+          }
+          profile.cart = cartItems;
+          await profile.save();
+          return res.status(201).json(cartItems);
+        }
+        return res.status(400).json({ message: "Food not found" });
+      }
+      return res.status(400).json({ message: "User profile not found" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("ADD_TO_CART_ERROR", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
