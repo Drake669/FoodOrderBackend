@@ -337,7 +337,11 @@ export const AddToCart = async (
           );
           if (existingItem.length > 0) {
             const index = cartItems.indexOf(existingItem[0]);
-            cartItems[index] = { food, unit: cartItem.unit };
+            if (cartItem.unit > 0) {
+              cartItems[index] = { food, unit: cartItem.unit };
+            } else {
+              cartItems.splice(index, 1);
+            }
           } else {
             cartItems.push({ food, unit: cartItem.unit });
           }
@@ -355,3 +359,15 @@ export const AddToCart = async (
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const GetCart = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {};
+
+export const EmptyCart = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {};

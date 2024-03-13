@@ -4,7 +4,9 @@ import {
   CreateOrder,
   CustomerLogin,
   CustomerSignUp,
+  EmptyCart,
   GetAllOrders,
+  GetCart,
   GetCustomerProfile,
   GetOrderById,
   RequestOTP,
@@ -32,6 +34,8 @@ router.get("/orders/:id", GetOrderById);
 
 /************************************* Cart*************************************/
 router.post("/cart", AddToCart);
+router.get("/cart", GetCart);
+router.delete("/cart", EmptyCart);
 
 /************************************* Payments*************************************/
 
