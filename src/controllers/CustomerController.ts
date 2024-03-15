@@ -364,10 +364,46 @@ export const GetCart = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
+) => {
+  try {
+    const customer = req.user;
+    if (customer) {
+      const profile = await Customer.findById(customer._id).populate(
+        "cart.food"
+      );
+      if (profile !== null) {
+        return res.status(200).json(profile.cart);
+      }
+      return res.status(400).json({ message: "User profile not found" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("GET_CART_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export const EmptyCart = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
+) => {
+  try {
+    const customer = req.user;
+    if (customer) {
+      const profile = await Customer.findById(customer._id).populate(
+        "cart.food"
+      );
+      if (profile !== null) {
+        profile.cart = [];
+        await profile.save();
+        return res.status(200).json({ message: "Cart emptied succesfully" });
+      }
+      return res.status(400).json({ message: "User profile not found" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("EMPTY_CART_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
