@@ -291,14 +291,11 @@ export const ProcessOrder = async (
         appliedOffers,
         offerId,
       } = <ProcessOrderInputs>req.body;
-      const order = await Order.findById(orderId);
+      const order = await Order.findById(orderId).populate("items.food");
       if (order) {
         order.orderStatus = orderStatus;
-        order.deliveryId = deliveryId;
         order.remarks = remarks;
         order.readyTime = readyTime;
-        order.appliedOffers = appliedOffers;
-        order.offerId = offerId;
         const processedOrder = await order.save();
         return res.status(200).json(processedOrder);
       }
