@@ -1,13 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import {
   AddFoodInput,
+  ProcessOrderInputs,
   VendorLoginInput,
   VendorProfileInput,
   VendorServiceInput,
 } from "../dto";
 import { FindVendor } from "./AdminController";
 import { generateSignature, validatePassword } from "../utility";
-import { Food } from "../models";
+import { Food, Order } from "../models";
 
 export const VendorLogin = async (
   req: Request,
@@ -225,5 +226,87 @@ export const GetFoodById = async (
   } catch (error) {
     console.log("UPDATE_SERVICE_ERROR", error);
     return error;
+  }
+};
+
+export const GetVendorOrders = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const vendor = req.user;
+    if (vendor) {
+      const orders = await Order.find({ vendorId: vendor._id }).populate(
+        "items.food"
+      );
+      if (orders) {
+        return res.status(200).json(orders);
+      }
+      return res.status(400).json({ message: "Failed to get orders" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("GET_ORDERS_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const GetVendorOrderById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const vendor = req.user;
+    if (vendor) {
+      const orderId = req.params.id;
+      const order = await Order.findById(orderId).populate("items.food");
+      if (order) {
+        return res.status(200).json(order);
+      }
+      return res.status(400).json({ message: "Failed to get order" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("GET_ORDER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const ProcessOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const vendor = req.user;
+    if (vendor) {
+      const orderId = req.params.id;
+      const {
+        orderStatus,
+        deliveryId,
+        remarks,
+        readyTime,
+        appliedOffers,
+        offerId,
+      } = <ProcessOrderInputs>req.body;
+      const order = await Order.findById(orderId);
+      if (order) {
+        order.orderStatus = orderStatus;
+        order.deliveryId = deliveryId;
+        order.remarks = remarks;
+        order.readyTime = readyTime;
+        order.appliedOffers = appliedOffers;
+        order.offerId = offerId;
+        const processedOrder = await order.save();
+        return res.status(200).json(processedOrder);
+      }
+      return res.status(400).json({ message: "Failed to process order" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("PROCESS_ORDER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

@@ -3,10 +3,16 @@ import { FoodDocument } from "./Food";
 
 export interface OrderDocument extends Document {
   items: { food: FoodDocument; unit: number }[];
+  vendorId: string;
   totalAmount: number;
   paidThrough: string;
   paymentResponse: string;
   orderStatus: string;
+  deliveryId: string;
+  remarks: string;
+  readyTime: number; // in minutes
+  appliedOffers: boolean;
+  offerId: string;
 }
 
 const OrderSchema = new Schema(
@@ -27,10 +33,16 @@ const OrderSchema = new Schema(
       ],
       required: true,
     },
+    vendorId: { type: String, required: true },
     totalAmount: { type: Number, required: true },
     paidThrough: { type: String, required: true },
     paymentResponse: { type: String },
     orderStatus: { type: String },
+    deliveryId: { type: String },
+    remarks: { type: String },
+    readyTime: { type: Number }, // in minutes
+    appliedOffers: { type: Boolean },
+    offerId: { type: String },
   },
   {
     timestamps: true,

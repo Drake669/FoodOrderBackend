@@ -3,7 +3,11 @@ import {
   AddFood,
   GetFoodById,
   GetFoods,
+  GetOrderById,
+  GetVendorOrderById,
+  GetVendorOrders,
   GetVendorProfile,
+  ProcessOrder,
   UpdateVendorImage,
   UpdateVendorProfile,
   UpdateVendorService,
@@ -37,5 +41,9 @@ router.patch("/service", UpdateVendorService);
 router.post("/food", images, AddFood);
 router.get("/foods", GetFoods);
 router.get("/food/:id", GetFoodById);
+
+router.get("/orders", GetVendorOrders);
+router.get("/orders/:id", GetVendorOrderById);
+router.put("/orders/:id/process", ProcessOrder);
 
 export { router as VendorRoutes };
