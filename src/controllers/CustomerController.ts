@@ -234,32 +234,32 @@ export const CreateOrder = async (
     if (customer) {
       const profile = await Customer.findById(customer._id);
       if (profile !== null) {
-        const items = <[CreateOrderInput]>req.body;
+        const items = profile.cart;
         const foods = await Food.find()
           .where("_id")
           .in(items.map((item) => item._id))
           .exec();
-        let cart = Array();
         let totalAmount = 0;
-        console.log(foods);
+        let vendorId = "";
         items.map((item) => {
           foods.map((food) => {
             if (item._id == food._id) {
+              vendorId = food.vendorId;
               totalAmount += food.price * item.unit;
-              cart.push({ food, unit: item.unit });
               return;
             }
           });
         });
-        if (cart.length > 0) {
+        if (profile.cart.length > 0) {
           const currentOrder = await Order.create({
-            items: cart,
+            items,
             totalAmount,
             paidThrough: "card",
             orderStatus: "pending",
+            vendorId: vendorId,
           });
-          console.log(profile);
           profile.orders.push(currentOrder);
+          profile.cart = [];
           await profile.save();
           return res.status(200).json(currentOrder);
         }
