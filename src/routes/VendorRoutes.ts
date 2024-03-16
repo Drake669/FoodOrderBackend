@@ -1,9 +1,11 @@
 import express from "express";
 import {
   AddFood,
+  AddOffer,
+  EditOffer,
   GetFoodById,
   GetFoods,
-  GetOrderById,
+  GetOffers,
   GetVendorOrderById,
   GetVendorOrders,
   GetVendorProfile,
@@ -45,5 +47,9 @@ router.get("/food/:id", GetFoodById);
 router.get("/orders", GetVendorOrders);
 router.get("/orders/:id", GetVendorOrderById);
 router.put("/orders/:id/process", ProcessOrder);
+
+router.post("/offer", AddOffer);
+router.get("/offers", GetOffers);
+router.patch("/offer", EditOffer);
 
 export { router as VendorRoutes };

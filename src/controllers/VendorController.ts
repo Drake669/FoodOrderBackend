@@ -5,10 +5,12 @@ import {
   VendorLoginInput,
   VendorProfileInput,
   VendorServiceInput,
+  AddOfferInputs,
+  CreateVendorInput,
 } from "../dto";
 import { FindVendor } from "./AdminController";
 import { generateSignature, validatePassword } from "../utility";
-import { Food, Order } from "../models";
+import { Food, Offer, Order, Vendor } from "../models";
 
 export const VendorLogin = async (
   req: Request,
@@ -304,6 +306,143 @@ export const ProcessOrder = async (
     return res.status(401).json({ message: "Unauthorized user" });
   } catch (error) {
     console.log("PROCESS_ORDER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const AddOffer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const vendor = req.user;
+    if (vendor) {
+      const {
+        offerType,
+        offerPercentage,
+        offerName,
+        isActive,
+        startDate,
+        endDate,
+        promoCode,
+        promoType,
+        banks,
+        bins,
+        users,
+        food,
+        minValue,
+      } = <AddOfferInputs>req.body;
+      const profile = await Vendor.findById(vendor._id);
+      if (profile !== null) {
+        const offer = await Offer.create({
+          offerType,
+          offerPercentage,
+          offerName,
+          isActive,
+          startDate,
+          endDate,
+          promoCode,
+          promoType,
+          banks,
+          bins,
+          users,
+          food,
+          vendors: [profile],
+          minValue,
+        });
+        return res.status(201).json(offer);
+      }
+      return res.status(400).json({ message: "Vendor profile not found" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("ADD_OFFER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const GetOffers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const vendor = req.user;
+    if (vendor) {
+      const vendorOffers = Array();
+      const offers = await Offer.find().populate("vendors");
+      offers.map((offer) => {
+        if (offer.offerType === "GENERIC") {
+          vendorOffers.push(offer);
+        } else {
+          offer.vendors.map((v) => {
+            if (v._id.toString() === vendor._id) {
+              vendorOffers.push(offer);
+            }
+          });
+        }
+      });
+      if (offers) return res.status(200).json(vendorOffers);
+      return res.status(400).json({ message: "Unable to get offers" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("GET_OFFERS_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const EditOffer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const vendor = req.user;
+    if (vendor) {
+      const id = req.params.id;
+      const offer = await Offer.findById(id).populate("vendors");
+      if (offer !== null) {
+        if (offer.vendors.some((v) => v._id === vendor._id)) {
+          const {
+            offerType,
+            offerPercentage,
+            offerName,
+            isActive,
+            startDate,
+            endDate,
+            promoCode,
+            promoType,
+            banks,
+            bins,
+            users,
+            food,
+            minValue,
+          } = <AddOfferInputs>req.body;
+          offer.offerType = offerType;
+          offer.offerPercentage = offerPercentage;
+          offer.offerName = offerName;
+          offer.isActive = isActive;
+          offer.startDate = startDate;
+          offer.endDate = endDate;
+          offer.promoCode = promoCode;
+          offer.promoType = promoType;
+          offer.banks = banks;
+          offer.bins = bins;
+          offer.users = users;
+          offer.food = food;
+          offer.minValue = minValue;
+
+          const updatedOffer = await offer.save();
+          return res.status(200).json(updatedOffer);
+        }
+      }
+      return res.status(400).json({ message: "Failed to edit offer" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("EDIT_OFFER_ERROR", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
