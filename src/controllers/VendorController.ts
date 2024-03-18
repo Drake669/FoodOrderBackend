@@ -393,6 +393,30 @@ export const GetOffers = async (
   }
 };
 
+export const GetOfferById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const vendor = req.user;
+    if (vendor) {
+      const id = req.params.id;
+      const offer = await Offer.findById(id).populate("vendors");
+      if (offer !== null) {
+        if (offer.vendors.some((v) => v._id.toString() === vendor._id)) {
+          return res.status(200).json(offer);
+        }
+      }
+      return res.status(400).json({ message: "Failed to get offer" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("GET_OFFER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export const EditOffer = async (
   req: Request,
   res: Response,
@@ -404,7 +428,7 @@ export const EditOffer = async (
       const id = req.params.id;
       const offer = await Offer.findById(id).populate("vendors");
       if (offer !== null) {
-        if (offer.vendors.some((v) => v._id === vendor._id)) {
+        if (offer.vendors.some((v) => v._id.toString() === vendor._id)) {
           const {
             offerType,
             offerPercentage,

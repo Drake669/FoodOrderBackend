@@ -6,7 +6,7 @@ import {
   CustomerLoginInputs,
   UpdateCustomerInputs,
 } from "../dto/Customer.dto";
-import { Customer, Food, Order } from "../models";
+import { Customer, Food, Offer, Order } from "../models";
 import {
   GenerateOTP,
   SendOTP,
@@ -404,6 +404,54 @@ export const EmptyCart = async (
     return res.status(401).json({ message: "Unauthorized user" });
   } catch (error) {
     console.log("EMPTY_CART_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const VerifyOffer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const customer = req.user;
+    if (customer) {
+      const offerId = req.params.id;
+      const appliedOffer = await Offer.findById(offerId);
+      if (appliedOffer && appliedOffer.isActive) {
+        return res.status(200).json(appliedOffer);
+      }
+      return res.status(400).json({ message: "Failed to apply offer" });
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("VERIFY_OFFER_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const CreatePayment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const customer = req.user;
+    if (customer) {
+      const { offerId, paymentMode, amount } = req.body;
+      let payableAmount = Number(amount);
+      if (offerId) {
+        const appliedOffer = await Offer.findById(offerId);
+        if (appliedOffer !== null && appliedOffer.isActive) {
+          payableAmount =
+            ((100 - appliedOffer.offerPercentage) / 100) * payableAmount;
+        }
+        return res.status(400).json({ message: "Offer not valid" });
+      }
+    }
+    return res.status(401).json({ message: "Internal server error" });
+  } catch (error) {
+    console.log("CREATE_PAYMENT_ERROR", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

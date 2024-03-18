@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { FoodDocument, Vendor } from "../models";
+import { FoodDocument, Offer, Vendor } from "../models";
 
 export const GetAvailableFoods = async (
   req: Request,
@@ -109,5 +109,22 @@ export const SearchFoods = async (
   } catch (error) {
     console.log("SEARCH_FOODS_ERROR", error);
     return error;
+  }
+};
+
+export const GetValidOffers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const offers = await Offer.find({ isActive: true });
+    if (offers !== null) {
+      return res.status(200).json(offers);
+    }
+    return res.status(401).json({ message: "Unauthorized user" });
+  } catch (error) {
+    console.log("GET_OFFERS_ERROR", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

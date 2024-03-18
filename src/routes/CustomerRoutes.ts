@@ -2,6 +2,7 @@ import express from "express";
 import {
   AddToCart,
   CreateOrder,
+  CreatePayment,
   CustomerLogin,
   CustomerSignUp,
   EmptyCart,
@@ -12,6 +13,7 @@ import {
   RequestOTP,
   UpdateCustomerProfile,
   VerifyCustomer,
+  VerifyOffer,
 } from "../controllers";
 import { Authenticate } from "../middlewares";
 
@@ -37,6 +39,10 @@ router.post("/cart", AddToCart);
 router.get("/cart", GetCart);
 router.delete("/cart", EmptyCart);
 
+/************************************* Offer*************************************/
+router.get("/offer/verify/:id", VerifyOffer);
+
 /************************************* Payments*************************************/
+router.post("/create-payment", CreatePayment);
 
 export { router as CustomerRoutes };

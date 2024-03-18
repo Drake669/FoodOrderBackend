@@ -5,6 +5,7 @@ import {
   EditOffer,
   GetFoodById,
   GetFoods,
+  GetOfferById,
   GetOffers,
   GetVendorOrderById,
   GetVendorOrders,
@@ -50,6 +51,7 @@ router.put("/orders/:id/process", ProcessOrder);
 
 router.post("/offer", AddOffer);
 router.get("/offers", GetOffers);
-router.patch("/offer", EditOffer);
+router.get("/offer/:id", GetOfferById);
+router.patch("/offer/:id", EditOffer);
 
 export { router as VendorRoutes };
